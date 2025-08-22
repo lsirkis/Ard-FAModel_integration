@@ -143,13 +143,13 @@ class TestSunflowerFarm:
             self.prob.set_val("sunflower.spacing_target", spacing)
             self.prob.run_model()
 
+            # get the turbine locations and their co-distance matrices
             points = np.vstack(
                 [
                     self.prob.get_val("x_turbines", units="km"),
                     self.prob.get_val("y_turbines", units="km"),
                 ]
             ).T
-            print(f"DEBUG!!!!! points.shape {points.shape}")
             dist_mtx = scipy.spatial.distance.squareform(
                 scipy.spatial.distance.pdist(points)
             )

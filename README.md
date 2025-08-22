@@ -1,6 +1,4 @@
-[![Python System Tests with Coverage](https://github.com/WISDEM/Ard/actions/workflows/python-tests-system.yml/badge.svg)](https://github.com/WISDEM/Ard/actions/workflows/python-tests-system.yml)
-[![Python Unit Tests with Coverage](https://github.com/WISDEM/Ard/actions/workflows/python-tests-unit.yml/badge.svg)](https://github.com/WISDEM/Ard/actions/workflows/python-tests-unit.yml)
-
+[![CI/CD test suite](https://github.com/WISDEM/Ard/actions/workflows/python-tests-consolidated.yaml/badge.svg?branch=develop)](https://github.com/WISDEM/Ard/actions/workflows/python-tests-consolidated.yaml)
 # Ard
 
 **Dig into wind farm design.**
@@ -74,7 +72,7 @@ If the installation fails, please open a new issue [here](https://github.com/WIS
 
 ## OptiWindNet
 
-We currently have experimental support for [Mauricio Souza de Alancar's OptiWindNet package for collection system cable path-planning optimization](https://gitlab.windenergy.dtu.dk/TOPFARM/OptiWindNet).
+We currently have experimental support for [Mauricio Souza de Alencar's OptiWindNet package for collection system cable path-planning optimization](https://gitlab.windenergy.dtu.dk/TOPFARM/OptiWindNet).
 
 ## Current capabilities
 

@@ -9,8 +9,12 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 # https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
-[tool.setuptools]
-packages = ["ard"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ard", "ard.*"]
+
+[tool.setuptools.package-data]
+"ard.api.default_systems" = ["*.yaml"]
 
 [project]
 name = "Ard"
@@ -18,6 +22,7 @@ version = "1.0.0-alpha0"
 authors = [
   {name = "Cory Frontin", email = "cory.frontin@nrel.gov"},
   {name = "Rafael Mudafort", email = "rafael.mudafort@nrel.gov"},
+  {name = "Jared Thomas", email = "jared.thomas@nrel.gov"},
 ]
 description = "A package for multidisciplinary and/or multifidelity wind farm design"
 readme= "README.md"
@@ -41,10 +46,10 @@ dependencies = [
   "openmdao",
   "shapely",
   "jax",
-  "optiwindnet[test]==0.0.2",
+  "optiwindnet>=0.0.4",
+  "statsmodels",
   "highspy",
-  "moorpy @ git+https://github.com/NREL/MoorPy.git@dev",
-  "famodel @ git+https://github.com/FloatingArrayDesign/FAModel.git@main",
+  "pyyaml",
 ]
 [project.optional-dependencies]
 dev = [
@@ -58,6 +63,10 @@ docs = [
   "jupyter-book",
   "sphinx-book-theme",
   "sphinx-autodoc-typehints",
+]
+floating = [
+  "moorpy @ git+https://github.com/NREL/MoorPy.git@dev",
+  "famodel @ git+https://github.com/FloatingArrayDesign/FAModel.git@main",
 ]
 [project.urls]
 # Homepage = "https://example.com"

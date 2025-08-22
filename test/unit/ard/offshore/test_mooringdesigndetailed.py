@@ -18,6 +18,7 @@ yaml = ruamel.yaml.YAML()
 from copy import deepcopy
 from numpy.testing import assert_allclose
 
+
 class TestMooringDesignDetailed:
     def setup_method(self):
 
@@ -26,6 +27,7 @@ class TestMooringDesignDetailed:
         # set turbine layout (3x3 grid 5D spacing)
         X, Y = [
             7.0 * self.D_rotor/1000 * v
+
             for v in np.meshgrid(np.arange(0, 3), np.arange(0, 3))
         ]
 
@@ -33,19 +35,18 @@ class TestMooringDesignDetailed:
         self.y_turbines = Y.flatten()
 
         self.N_turbines = len(self.x_turbines)
-        
+
         self.modeling_options = {
             "farm": {
                 "N_turbines": self.N_turbines,
-                },
-            
+            },
             "floating": True,
             "platform": {
                 "N_anchors": 3,
                 "min_mooring_line_length_m": 500.0,
                 "N_anchor_dimensions": 2,
             },
-            "site_depth": 50.0,
+            "site_depth": 200.0,
             "collection": {
                 "max_turbines_per_string": 8,
                 "solver_name": "appsi_highs",
@@ -56,28 +57,22 @@ class TestMooringDesignDetailed:
             },
             "mooring_setup": {
                 "site_conds": {
-                    "general": {"water_depth": 200},
-                    # "bathymetry": {
-                    #     "file": Path(ard.__file__).parents[1]
-                    #     / "examples"
-                    #     / "data"
-                    #     / "offshore"
-                    #     / "GulfOfMaine_bathymetry_100x99.txt"
-                    # },
+                    "general": {},
+                    "bathymetry": {
+                        "file": Path(__file__).parent.absolute()
+                        / "inputs"
+                        / "GulfOfMaine_bathymetry_100x99.txt"
+                    },
                     "seabed": {
-                        "file": Path(ard.__file__).parents[1]
-                        / "examples"
-                        / "data"
-                        / "offshore"
+                        "file": Path(__file__).parent.absolute()
+                        / "inputs"
                         / "GulfOfMaine_soil_100x99.txt"}
                 },
                 "mooring_info": (
-                    Path(ard.__file__).parents[1]
-                    / "examples"
-                    / "offshore-detailed"
+                    Path(__file__).parent.absolute()
+                    / "inputs"
                     / "OntologySample200m.yaml"
                 ),
-            
                 "adjuster_settings": {
                     "adjuster": adjustMooring,
                     "method": "horizontal",
@@ -85,7 +80,6 @@ class TestMooringDesignDetailed:
                 },
             },
         }
-               
 
     def test_FAModel_turbine_positions(self):
 
@@ -96,10 +90,11 @@ class TestMooringDesignDetailed:
             ard.offshore.mooring_design_detailed.DetailedMooringDesign(
                 modeling_options=self.modeling_options,
                 wind_query=None,
+                data_path=Path(__file__).parent.absolute(),
             ),
             promotes_inputs=["x_turbines", "y_turbines"],
         )
-        
+
         prob = om.Problem(model)
         prob.setup()
 
@@ -116,11 +111,12 @@ class TestMooringDesignDetailed:
         assert np.all(
             np.isclose(prob.get_val("mooring_design.y_turbines"), self.y_turbines)
         )
-   
+
     def test_FAModel_anchor_positions(self):
-        #change number of turbines to one
+
+        # change number of turbines to one
         self.modeling_options["farm"]["N_turbines"] = 1
-        
+
         # set up openmdao problem
         model = om.Group()
         model.add_subsystem(  # mooring system design
@@ -128,10 +124,11 @@ class TestMooringDesignDetailed:
             ard.offshore.mooring_design_detailed.DetailedMooringDesign(
                 modeling_options=self.modeling_options,
                 wind_query=None,
+                data_path=Path("inputs").absolute(),
             ),
             promotes_inputs=["x_turbines", "y_turbines"],
         )
-        
+
         prob = om.Problem(model)
         prob.setup()
 
@@ -142,17 +139,20 @@ class TestMooringDesignDetailed:
         prob.run_model()
         
         # calculate anchor positions in km
-        x_anchors = [1 + 0.7*np.cos(60/180*np.pi), 1 + 0.7*np.cos(60/180*np.pi), 1 - 0.7]
-        y_anchors = [1 - 0.7*np.sin(60/180*np.pi), 1 + 0.7*np.sin(60/180*np.pi), 1]
+        x_anchors = [
+            1 + 0.7 * np.cos(60 / 180 * np.pi),
+            1 + 0.7 * np.cos(60 / 180 * np.pi),
+            1 - 0.7,
+        ]
+        y_anchors = [
+            1 - 0.7 * np.sin(60 / 180 * np.pi),
+            1 + 0.7 * np.sin(60 / 180 * np.pi),
+            1,
+        ]
 
         # check that mooring_design anchor positions match expected
-        assert np.all(
-
-            np.isclose(prob.get_val("mooring_design.x_anchors"), x_anchors)
-        )
-        assert np.all(
-            np.isclose(prob.get_val("mooring_design.y_anchors"), y_anchors)
-        )
+        assert np.all(np.isclose(prob.get_val("mooring_design.x_anchors"), x_anchors))
+        assert np.all(np.isclose(prob.get_val("mooring_design.y_anchors"), y_anchors))
     
     def test_FAModel_mooring_config0(self):
         '''
@@ -174,6 +174,7 @@ class TestMooringDesignDetailed:
             ard.offshore.mooring_design_detailed.DetailedMooringDesign(
                 modeling_options=self.modeling_options,
                 wind_query=None,
+                data_path=Path("inputs").absolute(),
             ),
             promotes_inputs=["x_turbines", "y_turbines"],
         )
@@ -232,6 +233,7 @@ class TestMooringDesignDetailed:
             ard.offshore.mooring_design_detailed.DetailedMooringDesign(
                 modeling_options=self.modeling_options,
                 wind_query=None,
+                data_path=Path("inputs").absolute(),
             ),
             promotes_inputs=["x_turbines", "y_turbines"],
         )
@@ -277,8 +279,8 @@ class TestMooringDesignDetailed:
     
     def test_FAModel_msystem(self):
         '''
-        Check mooring system setup such as number of lines, fairlead radius, fairlead depth, heading
-        match expected values
+        Check mooring system setup such as number of lines, fairlead radius,
+        fairlead depth, heading match expected values
         '''
         #change number of turbines to one
         self.modeling_options["farm"]["N_turbines"] = 1
@@ -290,6 +292,7 @@ class TestMooringDesignDetailed:
             ard.offshore.mooring_design_detailed.DetailedMooringDesign(
                 modeling_options=self.modeling_options,
                 wind_query=None,
+                data_path=Path("inputs").absolute(),
             ),
             promotes_inputs=["x_turbines", "y_turbines"],
         )
@@ -318,10 +321,8 @@ class TestMooringDesignDetailed:
         ''' Check that bathymetry is loading in to FAModel as expected '''
         # add in varied bathymetry file input
         self.modeling_options["mooring_setup"]["site_conds"]["bathymetry"] = {
-                                        "file": Path(ard.__file__).parents[1]
-                                        / "examples"
-                                        / "data"
-                                        / "offshore"
+                                        "file": Path(__file__).parent.absolute()
+                                        / "inputs"
                                         / "GulfOfMaine_bathymetry_100x99.txt"
                                         }
         #change number of turbines to one
@@ -334,6 +335,7 @@ class TestMooringDesignDetailed:
             ard.offshore.mooring_design_detailed.DetailedMooringDesign(
                 modeling_options=self.modeling_options,
                 wind_query=None,
+                data_path=Path("inputs").absolute(),
             ),
             promotes_inputs=["x_turbines", "y_turbines"],
         )
@@ -378,6 +380,7 @@ class TestMooringDesignDetailed:
             ard.offshore.mooring_design_detailed.DetailedMooringDesign(
                 modeling_options=self.modeling_options,
                 wind_query=None,
+                data_path=Path("inputs").absolute(),
             ),
             promotes_inputs=["x_turbines", "y_turbines"],
         )
@@ -416,17 +419,15 @@ class TestMooringDesignDetailed:
     def test_FAModel_mooring_adjust_horizontal(self):
         '''
         Check length adjustment is properly working (test in FAModel checks too,
-                                                     but make sure inputs etc haven't changed')
+                                     but make sure inputs etc haven't changed')
         '''
         #change number of turbines to one
         self.modeling_options["farm"]["N_turbines"] = 1
         
         # add in varied bathymetry
         self.modeling_options["mooring_setup"]["site_conds"]["bathymetry"] = {
-                                        "file": Path(ard.__file__).parents[1]
-                                        / "examples"
-                                        / "data"
-                                        / "offshore"
+                                        "file": Path(__file__).parent.absolute()
+                                        / "inputs"
                                         / "GulfOfMaine_bathymetry_100x99.txt"
                                         }
         
@@ -437,6 +438,7 @@ class TestMooringDesignDetailed:
             ard.offshore.mooring_design_detailed.DetailedMooringDesign(
                 modeling_options=self.modeling_options,
                 wind_query=None,
+                data_path=Path("inputs").absolute(),
             ),
             promotes_inputs=["x_turbines", "y_turbines"],
         )
@@ -489,7 +491,7 @@ class TestMooringDesignDetailed:
     def test_FAModel_mooring_adjust_pretension(self):
         '''
         Check length adjustment is properly working (test in FAModel checks too,
-                                                     but make sure inputs etc haven't changed')
+                                    but make sure inputs etc haven't changed')
         '''
         #change number of turbines to one
         self.modeling_options["farm"]["N_turbines"] = 1
@@ -498,12 +500,11 @@ class TestMooringDesignDetailed:
         if "bathymetry" in self.modeling_options["mooring_setup"]["site_conds"]:
             self.modeling_options["mooring_setup"]["site_conds"].pop("bathymetry")
         # increase depth so we can use taut
-        self.modeling_options["mooring_setup"]["site_conds"]["general"]["water_depth"]=800
+        self.modeling_options["site_depth"]=800
         # need to switch out the ontology sample too to get a taut line design
         self.modeling_options["mooring_setup"]["mooring_info"] = (
-                                        Path(ard.__file__).parents[1]
-                                        / "examples"
-                                        / "offshore-detailed"
+                                        Path(__file__).parent.absolute()
+                                        / "inputs"
                                         / "OntologySample600m.yaml")
         # switch to pretension adjustment settings
         self.modeling_options["mooring_setup"]["adjuster_settings"] = {
@@ -517,6 +518,7 @@ class TestMooringDesignDetailed:
             ard.offshore.mooring_design_detailed.DetailedMooringDesign(
                 modeling_options=self.modeling_options,
                 wind_query=None,
+                data_path=Path("inputs").absolute(),
             ),
             promotes_inputs=["x_turbines", "y_turbines"],
         )
@@ -532,10 +534,8 @@ class TestMooringDesignDetailed:
         
         # add in varied bathymetry
         self.modeling_options["mooring_setup"]["site_conds"]["bathymetry"] = {
-                                        "file": Path(ard.__file__).parents[1]
-                                        / "examples"
-                                        / "data"
-                                        / "offshore"
+                                        "file": Path(__file__).parent.absolute()
+                                        / "inputs"
                                         / "humboldt_bathymetry_100x100.txt"
                                         }
         
@@ -546,6 +546,7 @@ class TestMooringDesignDetailed:
             ard.offshore.mooring_design_detailed.DetailedMooringDesign(
                 modeling_options=self.modeling_options,
                 wind_query=None,
+                data_path=Path("inputs").absolute(),
             ),
             promotes_inputs=["x_turbines", "y_turbines"],
         )
@@ -578,7 +579,10 @@ class TestMooringDesignDetailed:
                     assert(moor.span > FAM0.mooringList[i].span)
                     
                 # check anchor xy loc is changing too    
-                assert(any([FAM.anchorList[i].r[j] != FAM0.anchorList[i].r[j] for j in range(2)]))
+                assert(any(
+                    [
+                    FAM.anchorList[i].r[j] != FAM0.anchorList[i].r[j] for j in range(2)
+                     ]))
    
             # next, check total tension is (relatively) constant
             # pull out tension of subsystem, compare to target to be witin 1%
