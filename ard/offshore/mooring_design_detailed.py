@@ -168,9 +168,9 @@ class DetailedMooringDesign(om.ExplicitComponent):
         """Computation for the OpenMDAO component."""
 
         # unpack the working variables
-        phi_platform = inputs["phi_platform"]
-        x_turbines = inputs["x_turbines"]*1000
-        y_turbines = inputs["y_turbines"]*1000
+        phi_platform = inputs["phi_platform"]  # [deg?]
+        x_turbines = inputs["x_turbines"]*1000 # [m]
+        y_turbines = inputs["y_turbines"]*1000 # [m]
         # thrust_turbines = inputs["thrust_turbines"]  # future-proofing
 
         # BEGIN: ALIASES FOR SOME USEFUL VARIABLES
@@ -188,12 +188,12 @@ class DetailedMooringDesign(om.ExplicitComponent):
         # END ALIASES FOR SOME USEFUL VARIABLES
 
         # reposition FAModel using the x and y turbine postions, and turbine headings
-        self.FAM.repositionArray(
-            np.array([[x_turbines[i],y_turbines[i]] for i in range(len(x_turbines))]),
-            platform_headings=phi_platform,
-            anch_resize=False,
-            return_costs=True,
-        )
+        anchor_costs, mooring_costs = self.FAM.repositionArray(
+                                    np.array([[x_turbines[i],y_turbines[i]] for i in range(len(x_turbines))]),
+                                    platform_headings=phi_platform,
+                                    anch_resize=False,
+                                    return_costs=True,
+                                )
 
         #store anchor x and y positions (km) in lists
         x_anchors = [float(self.FAM.anchorList[anch].r[0] / 1000) for anch in self.FAM.anchorList]
@@ -207,12 +207,12 @@ class DetailedMooringDesign(om.ExplicitComponent):
 
 
         # pull out needed information
-        pf_coords = FAM_settings.get('pf_locs',np.zeros((self.N_turbines,2)))
-        pf_headings = FAM_settings.get('pf_headings',np.zeros(self.N_turbines))
-        hydrostatics = FAM_settings.get('hydrostatics',{})
-        RAFT_platform = FAM_settings.get('RAFT_platform',{})
-        pf_rFair = FAM_settings.get('rFair',58)
-        pf_zFair = FAM_settings.get('zFair',-14)
+        pf_coords = FAM_settings.get('pf_locs',np.zeros((self.N_turbines,2))) # [m]
+        pf_headings = FAM_settings.get('pf_headings',np.zeros(self.N_turbines)) # [deg]
+        hydrostatics = FAM_settings.get('hydrostatics',{}) # optional dictionary
+        RAFT_platform = FAM_settings.get('RAFT_platform',{}) # optional dictionary
+        pf_rFair = FAM_settings.get('rFair',58) # [m]
+        pf_zFair = FAM_settings.get('zFair',-14) # [m]
 
         with open(FAM_settings.get('mooring_info',{})) as file:
             mooring_info = yaml.load(file, Loader=yaml.FullLoader)
@@ -222,7 +222,7 @@ class DetailedMooringDesign(om.ExplicitComponent):
         # initialize FAModel project object
         FAM = Project(raft=False)
 
-        # - - - - Site conditions - - - -
+        # - - - - Site conditions - - - 
         FAM.loadSite(site_conds)
 
         # - - - - Platforms - - - -
@@ -342,7 +342,7 @@ class DetailedMooringDesign(om.ExplicitComponent):
                                    reposition=True,
                                    **FAM_settings['adjuster_settings'])
                     count += 1
-
+        FAM.updateAnchor()
         FAM.getMoorPyArray()
-
+        
         return(FAM)
